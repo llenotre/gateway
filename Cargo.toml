@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+analytics-stub = { path = "analytics-stub" }
+anyhow = "1.0.89"
 axum = { version = "0.7.7", features = ["json"] }
 chrono = "0.4.38"
 envy = "0.4.2"

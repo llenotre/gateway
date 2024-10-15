@@ -2,6 +2,8 @@
 
 mod route;
 mod uaparser;
+mod util;
+mod geoip;
 
 use crate::route::{access, health};
 use crate::uaparser::UaParser;
@@ -15,6 +17,7 @@ use tokio::select;
 use tokio::sync::RwLock;
 use tokio_postgres::NoTls;
 use tracing::{error, info};
+use crate::geoip::GeoIP;
 
 #[derive(Deserialize)]
 struct Config {
@@ -22,11 +25,17 @@ struct Config {
     pub port: u32,
     /// The connection string to the database.
     pub db: String,
+
+    /// The URL to fetch uaparser data.
+    pub uaparser_url: String,
+    /// The URL to fetch geoip data.
+    pub geoip_url: String,
 }
 
 struct Context {
     db: RwLock<tokio_postgres::Client>,
     uaparser: UaParser,
+    geoip: GeoIP,
 }
 
 #[tokio::main]
@@ -45,7 +54,8 @@ async fn main() -> io::Result<()> {
         });
     let ctx = Arc::new(Context {
         db: RwLock::new(client),
-        uaparser: UaParser::new().await.expect("UaParser failure"),
+        uaparser: UaParser::new(&config).await.expect("UaParser failure"),
+        geoip: GeoIP::new(&config).await.expect("GeoIP failure"),
     });
     // TODO handle DB reconnect
     info!("start http server");
@@ -56,7 +66,7 @@ async fn main() -> io::Result<()> {
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.port)).await?;
     select! {
         res = axum::serve(listener, app) => res.expect("HTTP failure"),
-        res = connection => res.expect("Database failure"), // TODO must reconnect instead. crashing will cause the lost of pending accesses to be inserted
+        res = connection => res.expect("Database failure"), // TODO must reconnect instead. crashing will cause the loss of pending accesses to be inserted
     }
     Ok(())
 }

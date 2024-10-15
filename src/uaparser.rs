@@ -1,14 +1,12 @@
+use crate::util::fetch;
+use anyhow::Result;
 use serde::Serialize;
 use std::time::Duration;
 use tokio::time::Instant;
 use uaparser::{Parser, UserAgentParser};
+use crate::Config;
 
 const RENEW_INTERVAL: Duration = Duration::from_days(1);
-
-/// Fetches parser info to renew it.
-async fn fetch() -> Vec<u8> {
-    todo!()
-}
 
 /// Result of user agent parsing.
 #[derive(Serialize)]
@@ -34,10 +32,10 @@ pub struct UaParser {
 }
 
 impl UaParser {
-    pub async fn new() -> Result<Self, uaparser::Error> {
-        let data = fetch().await;
+    pub async fn new(config: &Config) -> Result<Self> {
+        let data = fetch(&config.uaparser_url).await?;
         let inner = UserAgentParser::from_bytes(&data)?;
-        Ok(UaParser {
+        Ok(Self {
             inner,
             last_renew: Instant::now(),
         })
