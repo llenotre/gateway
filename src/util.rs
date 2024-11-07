@@ -1,16 +1,16 @@
 //! Utilities.
 
 use anyhow::{bail, Result};
-use reqwest::header;
 use std::sync::{RwLock, RwLockReadGuard};
 use tracing::trace;
 
 /// Fetches a file from the given URL and returns its content.
-pub async fn fetch(url: &str, auth: Option<&str>) -> Result<Vec<u8>> {
+pub async fn fetch(url: &str, auth: Option<(&str, &str)>) -> Result<Vec<u8>> {
+    trace!(url, "fetch resource");
     let client = reqwest::Client::new();
     let mut request = client.get(url);
     if let Some(auth) = auth {
-        request = request.header(header::AUTHORIZATION, auth);
+        request = request.basic_auth(auth.0, Some(auth.1));
     }
     let response = request.send().await?;
     let status = response.status();
@@ -34,7 +34,7 @@ pub struct Renewer<T: Renewable> {
     /// The URL to fetch the resource's data from.
     url: String,
     /// Optional basic auth.
-    auth: Option<String>,
+    auth: Option<(String, String)>,
 
     /// The resource.
     inner: RwLock<T>,
@@ -44,19 +44,22 @@ impl<T: Renewable> Renewer<T> {
     /// Creates a new instance.
     ///
     /// The renewer fetches the required data from the given `url`.
-    pub async fn new(url: String, auth: Option<String>) -> Result<Self> {
-        let data = fetch(&url, auth.as_deref()).await?;
+    pub async fn new(url: String, auth: Option<(String, String)>) -> Result<Self> {
+        let auth_deref = auth.as_ref().map(|(u, p)| (u.as_str(), p.as_str()));
+        let data = fetch(&url, auth_deref).await?;
         let inner = T::new(data)?;
         Ok(Self {
             url,
             auth,
+
             inner: RwLock::new(inner),
         })
     }
 
     /// Renew the resource.
     pub async fn renew(&self) -> Result<()> {
-        let data = fetch(&self.url, self.auth.as_deref()).await?;
+        let auth = self.auth.as_ref().map(|(u, p)| (u.as_str(), p.as_str()));
+        let data = fetch(&self.url, auth).await?;
         let inner = T::new(data)?;
         let mut guard = self.inner.write().unwrap();
         *guard = inner;

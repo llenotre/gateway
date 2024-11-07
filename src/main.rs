@@ -32,8 +32,10 @@ struct Config {
     pub uaparser_url: String,
     /// The URL to fetch geoip data.
     pub geoip_url: String,
-    /// The geoip authentication (`account_id:license_key`).
-    pub geoip_auth: String,
+    /// The geoip username (account ID).
+    pub geoip_user: String,
+    /// The geoip password (license key).
+    pub geoip_password: String,
 }
 
 struct Context {
@@ -57,14 +59,18 @@ async fn main() -> io::Result<()> {
             error!(%error, "postgres: connection");
             exit(1);
         });
+    info!("prepare context");
     let ctx = Arc::new(Context {
         db: RwLock::new(client),
         uaparser: Renewer::new(config.uaparser_url, None)
             .await
             .expect("UaParser failure"),
-        geoip: Renewer::new(config.geoip_url, Some(config.geoip_auth))
-            .await
-            .expect("GeoIP failure"),
+        geoip: Renewer::new(
+            config.geoip_url,
+            Some((config.geoip_user, config.geoip_password)),
+        )
+        .await
+        .expect("GeoIP failure"),
     });
     let ctx_ = ctx.clone();
     let renew_task = tokio::spawn(async {
