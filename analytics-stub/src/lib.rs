@@ -1,4 +1,4 @@
-use axum::extract::{ConnectInfo, FromRequestParts, Request};
+use axum::extract::{FromRequestParts, Request};
 use axum::http::header::{REFERER, USER_AGENT};
 use axum::response::Response;
 use chrono::Utc;
@@ -10,6 +10,7 @@ use std::net::IpAddr;
 use std::sync::LazyLock;
 use std::task::{Context, Poll};
 use std::time::Duration;
+use axum_client_ip::InsecureClientIp;
 use tokio::select;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 use tokio::time::interval;
@@ -130,10 +131,12 @@ where
     }
 
     fn call(&mut self, request: Request) -> Self::Future {
-        // Get connection information
+        // Get peer address
         let (mut parts, body) = request.into_parts();
-        let connect_info = block_on(ConnectInfo::<IpAddr>::from_request_parts(&mut parts, &()))
-            .expect("could not retrieve ConnectInfo");
+        // According to the crate's documentation, `InsecureClientIp` is fine for geolocation
+        let peer_addr = block_on(InsecureClientIp::from_request_parts(&mut parts, &()))
+            .expect("could not retrieve peer address")
+            .0;
         let request = Request::from_parts(parts, body);
         // Gather data
         let user_agent = request
@@ -153,7 +156,7 @@ where
             ACCESS_POOL
                 .push(Access {
                     date: Utc::now().timestamp_millis() / 1000,
-                    peer_addr: Some(connect_info.0),
+                    peer_addr: Some(peer_addr),
                     user_agent,
                     referer,
                     method,
