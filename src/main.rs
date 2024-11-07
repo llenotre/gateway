@@ -8,16 +8,19 @@ mod util;
 use crate::geoip::GeoIP;
 use crate::route::{access, health};
 use crate::uaparser::UaParser;
+use crate::util::Renewer;
 use axum::routing::{get, put};
 use axum::Router;
 use serde::Deserialize;
 use std::io;
 use std::process::exit;
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::select;
 use tokio::sync::RwLock;
+use tokio::time::interval;
 use tokio_postgres::NoTls;
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
 #[derive(Deserialize)]
 struct Config {
@@ -34,8 +37,8 @@ struct Config {
 
 struct Context {
     db: RwLock<tokio_postgres::Client>,
-    uaparser: UaParser,
-    geoip: GeoIP,
+    uaparser: Renewer<UaParser>,
+    geoip: Renewer<GeoIP>,
 }
 
 #[tokio::main]
@@ -55,8 +58,25 @@ async fn main() -> io::Result<()> {
         });
     let ctx = Arc::new(Context {
         db: RwLock::new(client),
-        uaparser: UaParser::new(&config).await.expect("UaParser failure"),
-        geoip: GeoIP::new(&config).await.expect("GeoIP failure"),
+        uaparser: Renewer::new(config.uaparser_url)
+            .await
+            .expect("UaParser failure"),
+        geoip: Renewer::new(config.geoip_url).await.expect("GeoIP failure"),
+    });
+    let ctx_ = ctx.clone();
+    let renew_task = tokio::spawn(async {
+        // 1 day
+        let mut interval = interval(Duration::from_secs(60 * 60 * 24));
+        let ctx = ctx_;
+        loop {
+            interval.tick().await;
+            if let Err(error) = ctx.uaparser.renew().await {
+                warn!(%error, "could not renew UaParser");
+            }
+            if let Err(error) = ctx.geoip.renew().await {
+                warn!(%error, "could not renew GeoIP");
+            }
+        }
     });
     info!("start http server");
     let app = Router::new()
@@ -67,6 +87,7 @@ async fn main() -> io::Result<()> {
     select! {
         res = axum::serve(listener, app) => res.expect("HTTP failure"),
         res = connection => res.expect("Database failure"),
+        _ = renew_task => panic!("Resource renew failure"),
     }
     Ok(())
 }

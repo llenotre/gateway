@@ -1,5 +1,4 @@
-use crate::util::fetch;
-use crate::Config;
+use crate::util::Renewable;
 use anyhow::Result;
 use serde::Serialize;
 use uaparser::{Parser, UserAgentParser};
@@ -24,13 +23,13 @@ pub struct UserDevice {
 
 pub struct UaParser(UserAgentParser);
 
-impl UaParser {
-    pub async fn new(config: &Config) -> Result<Self> {
-        let data = fetch(&config.uaparser_url).await?;
-        let inner = UserAgentParser::from_bytes(&data)?;
-        Ok(Self(inner))
+impl Renewable for UaParser {
+    fn new(data: Vec<u8>) -> Result<Self> {
+        Ok(Self(UserAgentParser::from_bytes(&data)?))
     }
+}
 
+impl UaParser {
     pub fn resolve(&self, user_agent: &str) -> UserDevice {
         let parsed = self.0.parse(user_agent);
         UserDevice {

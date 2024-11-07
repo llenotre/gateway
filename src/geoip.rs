@@ -1,5 +1,4 @@
-use crate::util::fetch;
-use crate::Config;
+use crate::util::Renewable;
 use anyhow::Result;
 use maxminddb::MaxMindDBError;
 use serde::Serialize;
@@ -21,13 +20,13 @@ pub struct UserGeolocation {
 /// Determines the location of a user from its IP address.
 pub struct GeoIP(maxminddb::Reader<Vec<u8>>);
 
-impl GeoIP {
-    pub async fn new(config: &Config) -> Result<Self> {
-        let data = fetch(&config.geoip_url).await?;
-        let inner = maxminddb::Reader::from_source(data)?;
-        Ok(Self(inner))
+impl Renewable for GeoIP {
+    fn new(data: Vec<u8>) -> Result<Self> {
+        Ok(Self(maxminddb::Reader::from_source(data)?))
     }
+}
 
+impl GeoIP {
     pub fn resolve(&self, addr: IpAddr) -> Result<UserGeolocation, MaxMindDBError> {
         let geolocation: maxminddb::geoip2::City = self.0.lookup(addr)?;
         Ok(UserGeolocation {
