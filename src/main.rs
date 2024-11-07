@@ -1,5 +1,7 @@
 //! Analytics aggregator.
 
+#![feature(duration_constructors)]
+
 mod geoip;
 mod route;
 mod uaparser;
@@ -11,6 +13,7 @@ use crate::uaparser::UaParser;
 use crate::util::{RenewableInfo, Renewer};
 use axum::routing::{get, put};
 use axum::Router;
+use chrono::Utc;
 use serde::Deserialize;
 use std::io;
 use std::process::exit;
@@ -78,10 +81,10 @@ async fn main() -> io::Result<()> {
         .await
         .expect("GeoIP failure"),
     });
+    info!("start background tasks");
     let ctx_ = ctx.clone();
     let renew_task = tokio::spawn(async {
-        // 1 day
-        let mut interval = interval(Duration::from_secs(60 * 60 * 24));
+        let mut interval = interval(Duration::from_days(1));
         let ctx = ctx_;
         loop {
             interval.tick().await;
@@ -90,6 +93,25 @@ async fn main() -> io::Result<()> {
             }
             if let Err(error) = ctx.geoip.renew().await {
                 warn!(%error, "could not renew GeoIP");
+            }
+        }
+    });
+    let ctx_ = ctx.clone();
+    let anonymize_task = tokio::spawn(async {
+        let mut interval = interval(Duration::from_hours(1));
+        let ctx = ctx_;
+        loop {
+            interval.tick().await;
+            // The end of the date range in which entries are going to be anonymized
+            let end = Utc::now() - Duration::from_days(365);
+            let db = ctx.db.write().await;
+            let res = db.execute(
+                "UPDATE analytics SET peer_addr = NULL, user_agent = NULL WHERE date <= $1 AND (peer_addr IS NOT NULL OR user_agent IS NOT NULL)",
+                &[&end],
+            )
+                .await;
+            if let Err(error) = res {
+                warn!(%error, "could not anonymize analytics");
             }
         }
     });
@@ -104,6 +126,7 @@ async fn main() -> io::Result<()> {
         res = axum::serve(listener, app) => res.expect("HTTP failure"),
         res = connection => res.expect("Database failure"),
         _ = renew_task => panic!("Resource renew failure"),
+        _ = anonymize_task => panic!("Anonymization failure"),
     }
     Ok(())
 }
