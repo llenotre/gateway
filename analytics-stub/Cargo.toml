@@ -6,7 +6,10 @@ edition = "2021"
 [dependencies]
 axum = "0.7.7"
 chrono = "0.4.38"
+futures = "0.3.31"
 futures-util = "0.3.31"
-reqwest = "0.12.8"
+reqwest = { version = "0.12.8", features = ["json"] }
 serde = { version = "1.0.210", features = ["derive"] }
+tokio = { version = "1.40.0", features = ["signal"] }
 tower = "0.5.1"
+tracing = "0.1.40"

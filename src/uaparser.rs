@@ -1,12 +1,8 @@
 use crate::util::fetch;
+use crate::Config;
 use anyhow::Result;
 use serde::Serialize;
-use std::time::Duration;
-use tokio::time::Instant;
 use uaparser::{Parser, UserAgentParser};
-use crate::Config;
-
-const RENEW_INTERVAL: Duration = Duration::from_days(1);
 
 /// Result of user agent parsing.
 #[derive(Serialize)]
@@ -26,23 +22,17 @@ pub struct UserDevice {
     agent_minor: Option<String>,
 }
 
-pub struct UaParser {
-    inner: UserAgentParser,
-    last_renew: Instant,
-}
+pub struct UaParser(UserAgentParser);
 
 impl UaParser {
     pub async fn new(config: &Config) -> Result<Self> {
         let data = fetch(&config.uaparser_url).await?;
         let inner = UserAgentParser::from_bytes(&data)?;
-        Ok(Self {
-            inner,
-            last_renew: Instant::now(),
-        })
+        Ok(Self(inner))
     }
 
     pub fn resolve(&self, user_agent: &str) -> UserDevice {
-        let parsed = self.inner.parse(user_agent);
+        let parsed = self.0.parse(user_agent);
         UserDevice {
             device_family: parsed.device.family.into(),
             device_brand: parsed.device.brand.map(Into::into),

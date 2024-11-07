@@ -1,10 +1,11 @@
-#![feature(duration_constructors)]
+//! Analytics aggregator.
 
+mod geoip;
 mod route;
 mod uaparser;
 mod util;
-mod geoip;
 
+use crate::geoip::GeoIP;
 use crate::route::{access, health};
 use crate::uaparser::UaParser;
 use axum::routing::{get, put};
@@ -17,7 +18,6 @@ use tokio::select;
 use tokio::sync::RwLock;
 use tokio_postgres::NoTls;
 use tracing::{error, info};
-use crate::geoip::GeoIP;
 
 #[derive(Deserialize)]
 struct Config {
@@ -40,6 +40,7 @@ struct Context {
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
+    tracing_subscriber::fmt::init();
     let config = envy::from_env::<Config>().unwrap_or_else(|error| {
         error!(%error, "invalid configuration");
         exit(1);
@@ -57,7 +58,6 @@ async fn main() -> io::Result<()> {
         uaparser: UaParser::new(&config).await.expect("UaParser failure"),
         geoip: GeoIP::new(&config).await.expect("GeoIP failure"),
     });
-    // TODO handle DB reconnect
     info!("start http server");
     let app = Router::new()
         .route("/health", get(health))
@@ -66,7 +66,7 @@ async fn main() -> io::Result<()> {
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.port)).await?;
     select! {
         res = axum::serve(listener, app) => res.expect("HTTP failure"),
-        res = connection => res.expect("Database failure"), // TODO must reconnect instead. crashing will cause the loss of pending accesses to be inserted
+        res = connection => res.expect("Database failure"),
     }
     Ok(())
 }

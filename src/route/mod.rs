@@ -1,11 +1,11 @@
 use crate::Context;
+use analytics_stub::Access;
 use axum::body::Body;
 use axum::extract::State;
 use axum::response::Response;
 use axum::Json;
 use reqwest::StatusCode;
 use std::sync::Arc;
-use analytics_stub::Access;
 
 pub async fn health(State(ctx): State<Arc<Context>>) -> Response {
     let res = {
@@ -25,16 +25,18 @@ pub async fn health(State(ctx): State<Arc<Context>>) -> Response {
     }
 }
 
-async fn insert_accesses(ctx: &Context, accesses: Vec<Access>) -> Result<(), tokio_postgres::Error> {
+async fn insert_accesses(
+    ctx: &Context,
+    accesses: Vec<Access>,
+) -> Result<(), tokio_postgres::Error> {
     let db = ctx.db.read().await;
-    // TODO batch insert
     for access in accesses {
         let geolocation = access.peer_addr.and_then(|ip| {
             let geolocation = ctx.geoip.resolve(ip).ok()?;
             Some(serde_json::to_value(geolocation).unwrap())
         });
         let device = access.user_agent.as_ref().map(|ua| {
-            let device = ctx.uaparser.resolve(&ua);
+            let device = ctx.uaparser.resolve(ua);
             serde_json::to_value(device).unwrap()
         });
         db.execute("INSERT INTO analytics (date, peer_addr, user_agent, referer, geolocation, device, method, uri) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT DO NOTHING",
@@ -59,10 +61,7 @@ pub async fn access(
     let res = insert_accesses(&ctx, accesses).await;
     let builder = Response::builder();
     match res {
-        Ok(_) => builder
-            .status(StatusCode::OK)
-            .body(Body::empty())
-            .unwrap(),
+        Ok(_) => builder.status(StatusCode::OK).body(Body::empty()).unwrap(),
         Err(_) => Response::builder()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
             .body(Body::empty())
