@@ -20,6 +20,7 @@ use tokio::select;
 use tokio::sync::RwLock;
 use tokio::time::interval;
 use tokio_postgres::NoTls;
+use tower_http::trace::TraceLayer;
 use tracing::{error, info, warn};
 
 #[derive(Deserialize)]
@@ -96,6 +97,7 @@ async fn main() -> io::Result<()> {
     let app = Router::new()
         .route("/health", get(health))
         .route("/access", put(access))
+        .layer(TraceLayer::new_for_http())
         .with_state(ctx);
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.port)).await?;
     select! {

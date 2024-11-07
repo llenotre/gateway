@@ -2,26 +2,40 @@ use crate::Context;
 use analytics_stub::Access;
 use axum::body::Body;
 use axum::extract::State;
-use axum::response::Response;
+use axum::response::{IntoResponse, Response};
 use axum::Json;
 use reqwest::StatusCode;
+use serde::Serialize;
 use std::sync::Arc;
+
+/// Json representing the service's health.
+#[derive(Serialize)]
+pub struct Health<'s> {
+    /// The service's status.
+    status: &'s str,
+    /// In case of error, the reason.
+    reason: Option<String>,
+}
 
 pub async fn health(State(ctx): State<Arc<Context>>) -> Response {
     let res = {
         let db = ctx.db.read().await;
         db.execute("SELECT 1 + 1", &[]).await
     };
-    let builder = Response::builder();
     match res {
-        Ok(2) => builder
-            .status(StatusCode::OK)
-            .body(Body::from("OK"))
-            .unwrap(),
-        _ => Response::builder()
-            .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .body(Body::from("KO"))
-            .unwrap(),
+        Ok(_) => Json(Health {
+            status: "OK",
+            reason: None,
+        })
+        .into_response(),
+        Err(error) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(Health {
+                status: "KO",
+                reason: Some(error.to_string()),
+            }),
+        )
+            .into_response(),
     }
 }
 
