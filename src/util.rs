@@ -1,6 +1,8 @@
 //! Utilities.
 
 use anyhow::{bail, Result};
+use flate2::read::GzDecoder;
+use std::io::Read;
 use std::sync::{RwLock, RwLockReadGuard};
 use tracing::trace;
 
@@ -29,38 +31,49 @@ pub trait Renewable: Sized {
     fn new(data: Vec<u8>) -> Result<Self>;
 }
 
+/// Information allowing to retrieve a resource.
+pub struct RenewableInfo {
+    /// The URL to fetch the resource's data from.
+    pub url: String,
+    /// Optional basic auth.
+    pub auth: Option<(String, String)>,
+    /// Tells whether the downloaded data is compressed (with gzip).
+    pub compressed: bool,
+}
+
 /// Wrapper allowing to renew the underlying resource.
 pub struct Renewer<T: Renewable> {
-    /// The URL to fetch the resource's data from.
-    url: String,
-    /// Optional basic auth.
-    auth: Option<(String, String)>,
-
-    /// The resource.
+    info: RenewableInfo,
     inner: RwLock<T>,
 }
 
 impl<T: Renewable> Renewer<T> {
+    async fn renew_impl(info: &RenewableInfo) -> Result<T> {
+        let auth = info.auth.as_ref().map(|(u, p)| (u.as_str(), p.as_str()));
+        let mut data = fetch(&info.url, auth).await?;
+        if info.compressed {
+            let mut decoder = GzDecoder::new(data.as_slice());
+            let mut buf = vec![];
+            decoder.read_to_end(&mut buf)?;
+            data = buf;
+        }
+        T::new(data)
+    }
+
     /// Creates a new instance.
     ///
     /// The renewer fetches the required data from the given `url`.
-    pub async fn new(url: String, auth: Option<(String, String)>) -> Result<Self> {
-        let auth_deref = auth.as_ref().map(|(u, p)| (u.as_str(), p.as_str()));
-        let data = fetch(&url, auth_deref).await?;
-        let inner = T::new(data)?;
+    pub async fn new(info: RenewableInfo) -> Result<Self> {
+        let inner = Self::renew_impl(&info).await?;
         Ok(Self {
-            url,
-            auth,
-
+            info,
             inner: RwLock::new(inner),
         })
     }
 
     /// Renew the resource.
     pub async fn renew(&self) -> Result<()> {
-        let auth = self.auth.as_ref().map(|(u, p)| (u.as_str(), p.as_str()));
-        let data = fetch(&self.url, auth).await?;
-        let inner = T::new(data)?;
+        let inner = Self::renew_impl(&self.info).await?;
         let mut guard = self.inner.write().unwrap();
         *guard = inner;
         Ok(())

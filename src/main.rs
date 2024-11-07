@@ -8,7 +8,7 @@ mod util;
 use crate::geoip::GeoIP;
 use crate::route::{access, health};
 use crate::uaparser::UaParser;
-use crate::util::Renewer;
+use crate::util::{RenewableInfo, Renewer};
 use axum::routing::{get, put};
 use axum::Router;
 use serde::Deserialize;
@@ -62,13 +62,18 @@ async fn main() -> io::Result<()> {
     info!("prepare context");
     let ctx = Arc::new(Context {
         db: RwLock::new(client),
-        uaparser: Renewer::new(config.uaparser_url, None)
-            .await
-            .expect("UaParser failure"),
-        geoip: Renewer::new(
-            config.geoip_url,
-            Some((config.geoip_user, config.geoip_password)),
-        )
+        uaparser: Renewer::new(RenewableInfo {
+            url: config.uaparser_url,
+            auth: None,
+            compressed: false,
+        })
+        .await
+        .expect("UaParser failure"),
+        geoip: Renewer::new(RenewableInfo {
+            url: config.geoip_url,
+            auth: Some((config.geoip_user, config.geoip_password)),
+            compressed: true,
+        })
         .await
         .expect("GeoIP failure"),
     });
