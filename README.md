@@ -8,7 +8,8 @@ The library provides a middleware for [axum](https://github.com/tokio-rs/axum).
 
 It requires the following environment variables:
 - `ANALYTICS_URL`: the URL of the endpoint to push analytics to
-- `ANALYTICS_TOKEN`: the access token of the service
+- `ANALYTICS_PROPERTY`: the property's UUID
+- `ANALYTICS_SECRET`: the property's secret
 
 
 
