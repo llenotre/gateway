@@ -26,10 +26,3 @@ CREATE TABLE IF NOT EXISTS newsletter_subscriber (
     unsubscribe_token UUID,
     UNIQUE (email)
 );
-
-CREATE TABLE IF NOT EXISTS "user" (
-    github_id BIGINT PRIMARY KEY,
-    github_login TEXT NOT NULL,
-    access_token TEXT NOT NULL,
-    admin BOOLEAN NOT NULL
-);
