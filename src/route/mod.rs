@@ -4,11 +4,13 @@ pub mod analytics;
 pub mod newsletter;
 
 use crate::Context;
-use axum::body::Body;
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
-use axum::Json;
+use axum::{
+	body::Body,
+	extract::{Path, State},
+	http::StatusCode,
+	response::{IntoResponse, Response},
+	Json,
+};
 use serde::Serialize;
 use std::sync::Arc;
 use tracing::error;
@@ -16,51 +18,51 @@ use tracing::error;
 /// Json representing the service's health.
 #[derive(Serialize)]
 pub struct Health<'s> {
-    /// The service's status.
-    status: &'s str,
-    /// In case of error, the reason.
-    reason: Option<String>,
+	/// The service's status.
+	status: &'s str,
+	/// In case of error, the reason.
+	reason: Option<String>,
 }
 
 pub async fn health(State(ctx): State<Arc<Context>>) -> Response {
-    let res = ctx.db.execute("SELECT 1 + 1", &[]).await;
-    match res {
-        Ok(_) => Json(Health {
-            status: "OK",
-            reason: None,
-        })
-        .into_response(),
-        Err(error) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(Health {
-                status: "KO",
-                reason: Some(error.to_string()),
-            }),
-        )
-            .into_response(),
-    }
+	let res = ctx.db.execute("SELECT 1 + 1", &[]).await;
+	match res {
+		Ok(_) => Json(Health {
+			status: "OK",
+			reason: None,
+		})
+		.into_response(),
+		Err(error) => (
+			StatusCode::INTERNAL_SERVER_ERROR,
+			Json(Health {
+				status: "KO",
+				reason: Some(error.to_string()),
+			}),
+		)
+			.into_response(),
+	}
 }
 
 /// GitHub avatar proxy endpoint, to protect users from data collection (GDPR).
 pub async fn avatar(Path(user): Path<String>) -> Response {
-    let client = reqwest::Client::new();
-    let url = format!("https://github.com/{user}.png");
-    let res = client.get(url).send().await;
-    let response = match res {
-        Ok(r) => r,
-        Err(error) => {
-            error!(%error, user, "could not get avatar from Github");
-            return (StatusCode::BAD_GATEWAY, "bad gateway").into_response();
-        }
-    };
-    let status = StatusCode::from_u16(response.status().as_u16()).unwrap();
-    let mut builder = Response::builder()
-        .status(status)
-        .header("Cache-Control", "max-age=604800");
-    if let Some(content_type) = response.headers().get("Content-Type") {
-        builder = builder.header("Content-Type", content_type);
-    }
-    builder
-        .body(Body::from_stream(response.bytes_stream()))
-        .unwrap()
+	let client = reqwest::Client::new();
+	let url = format!("https://github.com/{user}.png");
+	let res = client.get(url).send().await;
+	let response = match res {
+		Ok(r) => r,
+		Err(error) => {
+			error!(%error, user, "could not get avatar from Github");
+			return (StatusCode::BAD_GATEWAY, "bad gateway").into_response();
+		}
+	};
+	let status = StatusCode::from_u16(response.status().as_u16()).unwrap();
+	let mut builder = Response::builder()
+		.status(status)
+		.header("Cache-Control", "max-age=604800");
+	if let Some(content_type) = response.headers().get("Content-Type") {
+		builder = builder.header("Content-Type", content_type);
+	}
+	builder
+		.body(Body::from_stream(response.bytes_stream()))
+		.unwrap()
 }
