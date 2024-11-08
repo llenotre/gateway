@@ -1,19 +1,18 @@
 //! Analytics collection.
 
-use std::sync::Arc;
+use crate::Context;
 use analytics_stub::Access;
 use axum::body::Body;
 use axum::extract::State;
-use axum::http::{StatusCode};
-use axum::Json;
+use axum::http::StatusCode;
 use axum::response::Response;
-use crate::Context;
+use axum::Json;
+use std::sync::Arc;
 
 async fn insert_accesses(
     ctx: &Context,
     accesses: Vec<Access>,
 ) -> Result<(), tokio_postgres::Error> {
-    let db = ctx.db.read().await;
     for access in accesses {
         let geolocation = access.peer_addr.and_then(|ip| {
             let geolocation = ctx.geoip.lock().resolve(ip).ok()?;
@@ -23,7 +22,7 @@ async fn insert_accesses(
             let device = ctx.uaparser.lock().resolve(ua);
             serde_json::to_value(device).unwrap()
         });
-        db.execute("INSERT INTO analytics (date, peer_addr, user_agent, referer, geolocation, device, method, uri) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT DO NOTHING",
+        ctx.db.execute("INSERT INTO analytics (date, peer_addr, user_agent, referer, geolocation, device, method, uri) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT DO NOTHING",
                    &[
                        &access.date,
                        &access.peer_addr,

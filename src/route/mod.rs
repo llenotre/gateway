@@ -21,10 +21,7 @@ pub struct Health<'s> {
 }
 
 pub async fn health(State(ctx): State<Arc<Context>>) -> Response {
-    let res = {
-        let db = ctx.db.read().await;
-        db.execute("SELECT 1 + 1", &[]).await
-    };
+    let res = ctx.db.execute("SELECT 1 + 1", &[]).await;
     match res {
         Ok(_) => Json(Health {
             status: "OK",

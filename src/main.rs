@@ -3,11 +3,13 @@
 #![feature(duration_constructors)]
 
 mod route;
-mod util;
 mod service;
+mod util;
 
+use crate::service::geoip::GeoIP;
+use crate::service::uaparser::UaParser;
 use crate::util::{RenewableInfo, Renewer};
-use axum::routing::{get, put};
+use axum::routing::{get, post, put};
 use axum::Router;
 use chrono::Utc;
 use serde::Deserialize;
@@ -16,13 +18,10 @@ use std::process::exit;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::select;
-use tokio::sync::RwLock;
 use tokio::time::interval;
 use tokio_postgres::NoTls;
 use tower_http::trace::TraceLayer;
 use tracing::{error, info, warn};
-use crate::service::geoip::GeoIP;
-use crate::service::uaparser::UaParser;
 
 #[derive(Deserialize)]
 struct Config {
@@ -41,7 +40,7 @@ struct Config {
 }
 
 struct Context {
-    db: RwLock<tokio_postgres::Client>,
+    db: tokio_postgres::Client,
     uaparser: Renewer<UaParser>,
     geoip: Renewer<GeoIP>,
 }
@@ -63,7 +62,7 @@ async fn main() -> io::Result<()> {
         });
     info!("prepare context");
     let ctx = Arc::new(Context {
-        db: RwLock::new(client),
+        db: client,
         uaparser: Renewer::new(RenewableInfo {
             url: config.uaparser_url,
             auth: None,
@@ -102,8 +101,7 @@ async fn main() -> io::Result<()> {
             interval.tick().await;
             // The end of the date range in which entries are going to be anonymized
             let end = Utc::now() - Duration::from_days(365);
-            let db = ctx.db.write().await;
-            let res = db.execute(
+            let res = ctx.db.execute(
                 "UPDATE analytics SET peer_addr = NULL, user_agent = NULL WHERE date <= $1 AND (peer_addr IS NOT NULL OR user_agent IS NOT NULL)",
                 &[&end],
             )
@@ -117,8 +115,11 @@ async fn main() -> io::Result<()> {
     let app = Router::new()
         .route("/health", get(route::health))
         .route("/access", put(route::analytics::access))
-        .route("/newsletter/subscribe", put(route::newsletter::subscribe))
-        .route("/newsletter/unsubscribe", put(route::newsletter::unsubscribe))
+        .route("/newsletter/subscribe", post(route::newsletter::subscribe))
+        .route(
+            "/newsletter/unsubscribe",
+            post(route::newsletter::unsubscribe),
+        )
         .layer(TraceLayer::new_for_http())
         .with_state(ctx);
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.port)).await?;

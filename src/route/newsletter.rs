@@ -1,10 +1,16 @@
 //! Newsletter endpoints.
 
+use crate::service::newsletter::{insert_subscriber, unsubscribe_from_token};
+use crate::util::validate_email;
+use crate::Context;
+use axum::body::Body;
 use axum::extract::State;
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde::Deserialize;
-use crate::Context;
-use crate::service::newsletter::insert_subscriber;
+use std::sync::Arc;
+use tracing::error;
 
 /// Payload of request to register a newsletter subscriber.
 #[derive(Deserialize)]
@@ -21,15 +27,34 @@ pub struct UnsubscribePayload {
 }
 
 /// Endpoint to subscribe to a newsletter.
-pub async fn subscribe(State(ctx): State<Context>, Json(payload): Json<SubscribePayload>) {
-    let _res = {
-        let db = ctx.db.read().await;
-        insert_subscriber(&db, &payload.email).await
-    };
-    todo!()
+pub async fn subscribe(
+    State(ctx): State<Arc<Context>>,
+    Json(payload): Json<SubscribePayload>,
+) -> Response {
+    if !validate_email(&payload.email) {
+        return (StatusCode::BAD_REQUEST, "invalid email address").into_response();
+    }
+    let res = insert_subscriber(&ctx.db, &payload.email).await;
+    match res {
+        Ok(_) => Response::new(Body::empty()),
+        Err(error) => {
+            error!(%error, "could not add newsletter subscriber");
+            (StatusCode::INTERNAL_SERVER_ERROR, "internal server error").into_response()
+        }
+    }
 }
 
 /// Endpoint to unsubscribe from a newsletter.
-pub async fn unsubscribe(Json(payload): Json<UnsubscribePayload>) {
-    todo!()
+pub async fn unsubscribe(
+    State(ctx): State<Arc<Context>>,
+    Json(payload): Json<UnsubscribePayload>,
+) -> Response {
+    let res = unsubscribe_from_token(&ctx.db, &payload.token).await;
+    match res {
+        Ok(_) => Response::new(Body::empty()),
+        Err(error) => {
+            error!(%error, "could not remove newsletter subscriber");
+            (StatusCode::INTERNAL_SERVER_ERROR, "internal server error").into_response()
+        }
+    }
 }

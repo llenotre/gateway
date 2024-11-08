@@ -1,7 +1,7 @@
 //! Newsletter logic.
 
-use chrono::Utc;
 use crate::util::PgResult;
+use chrono::Utc;
 
 /// Insert a new email in the newsletter subscribers list.
 pub async fn insert_subscriber(db: &tokio_postgres::Client, email: &str) -> PgResult<()> {
@@ -11,7 +11,7 @@ pub async fn insert_subscriber(db: &tokio_postgres::Client, email: &str) -> PgRe
 			VALUES ($1, $2) ON CONFLICT DO NOTHING",
         &[&email, &now],
     )
-        .await?;
+    .await?;
     Ok(())
 }
 

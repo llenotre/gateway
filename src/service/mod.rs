@@ -1,3 +1,3 @@
 pub mod geoip;
-pub mod uaparser;
 pub mod newsletter;
+pub mod uaparser;

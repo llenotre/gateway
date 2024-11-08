@@ -2,10 +2,10 @@
 
 use anyhow::{bail, Result};
 use flate2::read::GzDecoder;
+use regex::Regex;
 use std::io::Read;
 use std::sync::{OnceLock, RwLock, RwLockReadGuard};
 use tracing::trace;
-use regex::Regex;
 
 /// Result with PostgreSQL error.
 pub type PgResult<T> = std::result::Result<T, tokio_postgres::Error>;
