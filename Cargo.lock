@@ -27,22 +27,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "analytics-stub"
-version = "0.1.0"
-dependencies = [
- "axum",
- "axum-client-ip",
- "chrono",
- "futures",
- "futures-util",
- "reqwest",
- "serde",
- "tokio",
- "tower",
- "tracing",
-]
-
-[[package]]
 name = "android-tzdata"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -541,13 +525,13 @@ dependencies = [
 name = "gateway"
 version = "0.1.0"
 dependencies = [
- "analytics-stub",
  "anyhow",
  "axum",
  "axum-auth",
  "chrono",
  "envy",
  "flate2",
+ "gateway-api",
  "maxminddb",
  "regex",
  "reqwest",
@@ -561,6 +545,22 @@ dependencies = [
  "tracing-subscriber",
  "uaparser",
  "uuid",
+]
+
+[[package]]
+name = "gateway-api"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "axum-client-ip",
+ "chrono",
+ "futures",
+ "futures-util",
+ "reqwest",
+ "serde",
+ "tokio",
+ "tower",
+ "tracing",
 ]
 
 [[package]]

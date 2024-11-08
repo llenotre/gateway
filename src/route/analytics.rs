@@ -2,13 +2,13 @@
 
 use crate::service::property;
 use crate::Context;
-use analytics_stub::Access;
 use axum::body::Body;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use axum_auth::AuthBasic;
+use gateway_api::Access;
 use std::sync::Arc;
 use tracing::{error, warn};
 use uuid::Uuid;

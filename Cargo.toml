@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-analytics-stub = { path = "analytics-stub" }
+gateway-api = { path = "gateway-api" }
 anyhow = "1.0.89"
 axum = { version = "0.7.7", features = ["json"] }
 axum-auth = "0.7.0"
