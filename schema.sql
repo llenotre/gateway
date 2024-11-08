@@ -21,7 +21,6 @@ CREATE INDEX date ON analytics(date);
 CREATE UNIQUE INDEX raw_info ON analytics(peer_addr, user_agent, method, uri);
 
 CREATE TABLE IF NOT EXISTS newsletter_subscriber (
-    property INTEGER NOT NULL,
     email TEXT PRIMARY KEY,
     subscribe_date TIMESTAMP NOT NULL,
     unsubscribe_date TIMESTAMP,
@@ -30,7 +29,6 @@ CREATE TABLE IF NOT EXISTS newsletter_subscriber (
 );
 
 CREATE TABLE IF NOT EXISTS "user" (
-    property INTEGER NOT NULL,
     access_token TEXT NOT NULL,
     github_login TEXT NOT NULL,
     github_id BIGINT NOT NULL,

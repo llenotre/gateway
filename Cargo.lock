@@ -505,6 +505,7 @@ dependencies = [
  "envy",
  "flate2",
  "maxminddb",
+ "regex",
  "reqwest",
  "serde",
  "serde_json",

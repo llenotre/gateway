@@ -2,14 +2,10 @@
 
 #![feature(duration_constructors)]
 
-mod geoip;
 mod route;
-mod uaparser;
 mod util;
+mod service;
 
-use crate::geoip::GeoIP;
-use crate::route::{access, health};
-use crate::uaparser::UaParser;
 use crate::util::{RenewableInfo, Renewer};
 use axum::routing::{get, put};
 use axum::Router;
@@ -25,6 +21,8 @@ use tokio::time::interval;
 use tokio_postgres::NoTls;
 use tower_http::trace::TraceLayer;
 use tracing::{error, info, warn};
+use crate::service::geoip::GeoIP;
+use crate::service::uaparser::UaParser;
 
 #[derive(Deserialize)]
 struct Config {
@@ -117,8 +115,10 @@ async fn main() -> io::Result<()> {
     });
     info!("start http server");
     let app = Router::new()
-        .route("/health", get(health))
-        .route("/access", put(access))
+        .route("/health", get(route::health))
+        .route("/access", put(route::analytics::access))
+        .route("/newsletter/subscribe", put(route::newsletter::subscribe))
+        .route("/newsletter/unsubscribe", put(route::newsletter::unsubscribe))
         .layer(TraceLayer::new_for_http())
         .with_state(ctx);
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.port)).await?;

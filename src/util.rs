@@ -3,8 +3,21 @@
 use anyhow::{bail, Result};
 use flate2::read::GzDecoder;
 use std::io::Read;
-use std::sync::{RwLock, RwLockReadGuard};
+use std::sync::{OnceLock, RwLock, RwLockReadGuard};
 use tracing::trace;
+use regex::Regex;
+
+/// Result with PostgreSQL error.
+pub type PgResult<T> = std::result::Result<T, tokio_postgres::Error>;
+
+/// Tells whether the given email is valid.
+pub fn validate_email(email: &str) -> bool {
+    static EMAIL_VALIDATION: OnceLock<Regex> = OnceLock::new();
+    let regex = EMAIL_VALIDATION.get_or_init(|| {
+        Regex::new(r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$").unwrap()
+    });
+    regex.is_match(email)
+}
 
 /// Fetches a file from the given URL and returns its content.
 pub async fn fetch(url: &str, auth: Option<(&str, &str)>) -> Result<Vec<u8>> {
