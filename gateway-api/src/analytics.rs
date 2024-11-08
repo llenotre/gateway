@@ -22,7 +22,7 @@ use tokio::{
     sync::mpsc::{unbounded_channel, UnboundedSender},
     time::interval,
 };
-use tower::Service;
+use tower::{Layer, Service};
 use tracing::{error, info};
 
 const FLUSH_THRESHOLD: usize = 1024;
@@ -142,6 +142,18 @@ impl AccessPool {
 }
 
 static ACCESS_POOL: LazyLock<AccessPool> = LazyLock::new(|| AccessPool::new());
+
+/// Analytics collection layer.
+#[derive(Clone)]
+pub struct AnalyticsLayer;
+
+impl<S> Layer<S> for AnalyticsLayer {
+    type Service = AnalyticsMiddleware<S>;
+
+    fn layer(&self, inner: S) -> Self::Service {
+        AnalyticsMiddleware { inner }
+    }
+}
 
 /// Middleware collecting analytics data.
 #[derive(Clone)]
