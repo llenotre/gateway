@@ -1,4 +1,4 @@
-//! Analytics aggregator.
+//! Data collection and authentication service.
 
 #![feature(duration_constructors)]
 

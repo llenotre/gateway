@@ -27,28 +27,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "analytics"
-version = "0.1.0"
-dependencies = [
- "analytics-stub",
- "anyhow",
- "axum",
- "chrono",
- "envy",
- "flate2",
- "maxminddb",
- "reqwest",
- "serde",
- "serde_json",
- "tokio",
- "tokio-postgres",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "uaparser",
-]
-
-[[package]]
 name = "analytics-stub"
 version = "0.1.0"
 dependencies = [
@@ -514,6 +492,28 @@ dependencies = [
  "pin-project-lite",
  "pin-utils",
  "slab",
+]
+
+[[package]]
+name = "gateway"
+version = "0.1.0"
+dependencies = [
+ "analytics-stub",
+ "anyhow",
+ "axum",
+ "chrono",
+ "envy",
+ "flate2",
+ "maxminddb",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tokio-postgres",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "uaparser",
 ]
 
 [[package]]
