@@ -1,12 +1,11 @@
 CREATE TABLE IF NOT EXISTS property (
-    id SERIAL PRIMARY KEY,
+    uuid UUID PRIMARY KEY,
     name VARCHAR(64) NOT NULL,
-    owner SERIAL NOT NULL,
-    access_token UUID NOT NULL
+    secret UUID NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS analytics (
-    property INTEGER NOT NULL,
+    property UUID NOT NULL,
     date TIMESTAMP NOT NULL,
     peer_addr INET,
     user_agent TEXT,
@@ -29,8 +28,8 @@ CREATE TABLE IF NOT EXISTS newsletter_subscriber (
 );
 
 CREATE TABLE IF NOT EXISTS "user" (
-    access_token TEXT NOT NULL,
+    github_id BIGINT PRIMARY KEY,
     github_login TEXT NOT NULL,
-    github_id BIGINT NOT NULL,
+    access_token TEXT NOT NULL,
     admin BOOLEAN NOT NULL
 );

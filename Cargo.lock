@@ -121,6 +121,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "axum-auth"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8169113a185f54f68614fcfc3581df585d30bf8542bcb99496990e1025e4120a"
+dependencies = [
+ "async-trait",
+ "axum-core",
+ "base64 0.21.7",
+ "http",
+]
+
+[[package]]
 name = "axum-client-ip"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -166,6 +178,12 @@ dependencies = [
  "rustc-demangle",
  "windows-targets",
 ]
+
+[[package]]
+name = "base64"
+version = "0.21.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
 
 [[package]]
 name = "base64"
@@ -501,6 +519,7 @@ dependencies = [
  "analytics-stub",
  "anyhow",
  "axum",
+ "axum-auth",
  "chrono",
  "envy",
  "flate2",
@@ -515,6 +534,7 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uaparser",
+ "uuid",
 ]
 
 [[package]]
@@ -1049,7 +1069,7 @@ version = "0.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "acda0ebdebc28befa84bee35e651e4c5f09073d668c7aed4cf7e23c3cda84b23"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "byteorder",
  "bytes",
  "fallible-iterator",
@@ -1073,6 +1093,7 @@ dependencies = [
  "postgres-protocol",
  "serde",
  "serde_json",
+ "uuid",
 ]
 
 [[package]]
@@ -1176,7 +1197,7 @@ version = "0.12.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f713147fbe92361e52392c73b8c9e48c04c6625bce969ef54dc901e58e042a7b"
 dependencies = [
- "base64",
+ "base64 0.22.1",
  "bytes",
  "encoding_rs",
  "futures-core",
@@ -1878,6 +1899,15 @@ dependencies = [
  "form_urlencoded",
  "idna",
  "percent-encoding",
+]
+
+[[package]]
+name = "uuid"
+version = "1.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f8c5f0a0af699448548ad1a2fbf920fb4bee257eae39953ba95cb84891a0446a"
+dependencies = [
+ "getrandom",
 ]
 
 [[package]]
