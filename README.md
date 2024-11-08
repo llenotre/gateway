@@ -1,10 +1,10 @@
-Library and HTTP service, implementing analytics collection.
+Library and HTTP service, implementing analytics collection and various utilities.
 
 
 
 ## Library
 
-The library provides a middleware for [axum](https://github.com/tokio-rs/axum).
+The library provides utilities for [axum](https://github.com/tokio-rs/axum).
 
 It requires the following environment variables:
 - `ANALYTICS_URL`: the URL of the endpoint to push analytics to
