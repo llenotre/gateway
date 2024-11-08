@@ -9,7 +9,7 @@ use axum::{
 	Json,
 };
 use axum_auth::AuthBasic;
-use gateway_api::Access;
+use gateway_api::analytics::Access;
 use std::sync::Arc;
 use tracing::{error, warn};
 use uuid::Uuid;
