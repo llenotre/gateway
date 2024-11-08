@@ -40,9 +40,9 @@ impl AccessPoolConfig {
     /// If the environment is invalid, the function panics.
     fn from_env() -> Self {
         Self {
-            url: env::var("ANALYTICS_URL").expect("ANALYTICS_URL must be set"),
-            property: env::var("ANALYTICS_PROPERTY").expect("ANALYTICS_PROPERTY must be set"),
-            secret: env::var("ANALYTICS_SECRET").expect("ANALYTICS_SECRET must be set"),
+            url: env::var("GATEWAY_URL").expect("GATEWAY_URL must be set"),
+            property: env::var("GATEWAY_PROPERTY").expect("GATEWAY_PROPERTY must be set"),
+            secret: env::var("GATEWAY_SECRET").expect("GATEWAY_SECRET must be set"),
         }
     }
 }

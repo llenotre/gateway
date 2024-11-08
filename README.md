@@ -7,9 +7,9 @@ Library and HTTP service, implementing analytics collection and various utilitie
 The library provides utilities for [axum](https://github.com/tokio-rs/axum).
 
 It requires the following environment variables:
-- `ANALYTICS_URL`: the URL of the endpoint to push analytics to
-- `ANALYTICS_PROPERTY`: the property's UUID
-- `ANALYTICS_SECRET`: the property's secret
+- `GATEWAY_URL`: the URL of the endpoint to push analytics to
+- `GATEWAY_PROPERTY`: the property's UUID
+- `GATEWAY_SECRET`: the property's secret
 
 
 
