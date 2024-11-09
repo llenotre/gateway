@@ -1,12 +1,13 @@
 //! Analytics management.
 
+use crate::util;
 use axum::{
     extract::{FromRequestParts, Request},
     http::header::{REFERER, USER_AGENT},
     response::Response,
 };
 use axum_client_ip::InsecureClientIp;
-use chrono::Utc;
+use chrono::{DateTime, Utc};
 use futures::executor::block_on;
 use futures_util::future::BoxFuture;
 use serde::{Deserialize, Serialize};
@@ -50,8 +51,8 @@ impl AccessPoolConfig {
 /// An access log, emitted when accessing an endpoint.
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Access {
-    /// UTC timestamp in seconds.
-    pub date: i64,
+    #[serde(with = "util::date_format")]
+    pub date: DateTime<Utc>,
     pub peer_addr: Option<IpAddr>,
     pub user_agent: Option<String>,
     pub referer: Option<String>,
@@ -199,7 +200,7 @@ where
         Box::pin(async move {
             ACCESS_POOL
                 .push(Access {
-                    date: Utc::now().timestamp_millis() / 1000,
+                    date: Utc::now(),
                     peer_addr: Some(peer_addr),
                     user_agent,
                     referer,

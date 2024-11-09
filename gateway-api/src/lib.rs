@@ -3,6 +3,7 @@
 use std::sync::OnceLock;
 
 pub mod analytics;
+pub mod util;
 
 /// Returns the content of the `robots.txt` file.
 ///
