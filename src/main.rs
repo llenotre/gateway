@@ -15,6 +15,7 @@ use axum::{
 	Router,
 };
 use chrono::Utc;
+use gateway_api::log::LogLayer;
 use serde::Deserialize;
 use std::{io, net::SocketAddr, process::exit, sync::Arc, time::Duration};
 use tokio::{select, time::interval};
@@ -23,7 +24,6 @@ use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 use tower_http::{
 	cors,
 	cors::{AllowHeaders, CorsLayer},
-	trace::TraceLayer,
 };
 use tracing::{error, info, warn};
 
@@ -162,7 +162,7 @@ async fn main() -> io::Result<()> {
 		.layer(GovernorLayer {
 			config: governor_conf,
 		})
-		.layer(TraceLayer::new_for_http())
+		.layer(LogLayer)
 		.with_state(ctx)
 		.into_make_service_with_connect_info::<SocketAddr>();
 	let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.port)).await?;

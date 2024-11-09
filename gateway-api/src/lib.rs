@@ -1,10 +1,11 @@
 //! API for the gateway and various utilities for HTTP services.
 
+pub mod analytics;
+pub mod log;
+pub mod util;
+
 use serde::Deserialize;
 use std::sync::OnceLock;
-
-pub mod analytics;
-pub mod util;
 
 /// Configuration for the API.
 #[derive(Deserialize)]

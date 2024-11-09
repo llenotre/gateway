@@ -2,13 +2,11 @@
 
 use crate::{util, Config};
 use axum::{
-	extract::{FromRequestParts, Request},
+	extract::{Request},
 	http::header::{REFERER, USER_AGENT},
 	response::Response,
 };
-use axum_client_ip::InsecureClientIp;
 use chrono::{DateTime, Utc};
-use futures::executor::block_on;
 use futures_util::future::BoxFuture;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -24,6 +22,7 @@ use tokio::{
 };
 use tower::{Layer, Service};
 use tracing::{error, info};
+use crate::util::extract_peer_addr;
 
 const FLUSH_THRESHOLD: usize = 1024;
 
@@ -175,14 +174,7 @@ where
 	}
 
 	fn call(&mut self, request: Request) -> Self::Future {
-		// Get peer address
-		let (mut parts, body) = request.into_parts();
-		// According to the crate's documentation, `InsecureClientIp` is fine for geolocation
-		let peer_addr = block_on(InsecureClientIp::from_request_parts(&mut parts, &()))
-			.ok()
-			.map(|addr| addr.0);
-		let request = Request::from_parts(parts, body);
-		// Gather data
+		let (request, peer_addr) = extract_peer_addr(request);
 		let access = Access {
 			date: Utc::now(),
 			peer_addr,
