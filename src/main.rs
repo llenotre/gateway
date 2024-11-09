@@ -20,7 +20,7 @@ use std::{io, net::SocketAddr, process::exit, sync::Arc, time::Duration};
 use tokio::{select, time::interval};
 use tokio_postgres::NoTls;
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
-use tower_http::trace::TraceLayer;
+use tower_http::{cors, cors::CorsLayer, trace::TraceLayer};
 use tracing::{error, info, warn};
 
 #[derive(Deserialize)]
@@ -150,6 +150,7 @@ async fn main() -> io::Result<()> {
 			"/newsletter/unsubscribe",
 			post(route::newsletter::unsubscribe),
 		)
+		.layer(CorsLayer::new().allow_origin(cors::Any))
 		.layer(GovernorLayer {
 			config: governor_conf,
 		})
