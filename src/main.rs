@@ -102,7 +102,7 @@ async fn main() -> io::Result<()> {
 		loop {
 			interval.tick().await;
 			// The end of the date range in which entries are going to be anonymized
-			let end = Utc::now() - Duration::from_days(365);
+			let end = Utc::now().naive_utc() - Duration::from_days(365);
 			let res = ctx.db.execute(
                 "UPDATE analytics SET peer_addr = NULL, user_agent = NULL WHERE date <= $1 AND (peer_addr IS NOT NULL OR user_agent IS NOT NULL)",
                 &[&end],

@@ -29,17 +29,17 @@ async fn insert_accesses(
 			serde_json::to_value(device).unwrap()
 		});
 		ctx.db.execute("INSERT INTO analytics (property, date, peer_addr, user_agent, referer, geolocation, device, method, uri) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT DO NOTHING",
-                   &[
-                       property,
-                       &access.date,
-                       &access.peer_addr,
-                       &access.user_agent,
-                       &access.referer,
-                       &geolocation,
-                       &device,
-                       &access.method,
-                       &access.uri,
-                   ]).await?;
+		&[
+			property,
+			&access.date.naive_utc(),
+			&access.peer_addr,
+			&access.user_agent,
+			&access.referer,
+			&geolocation,
+			&device,
+			&access.method,
+			&access.uri,
+		]).await?;
 	}
 	Ok(())
 }
