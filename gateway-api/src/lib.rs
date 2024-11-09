@@ -30,8 +30,8 @@ impl Config {
 	}
 }
 
-/// Returns the content of the `robots.txt` file.
-pub fn robots() -> &'static str {
+/// Endpoint for the `robots.txt` file.
+pub async fn robots() -> &'static str {
 	static ROBOTS: OnceLock<String> = OnceLock::new();
 	ROBOTS.get_or_init(|| {
 		let config = Config::get();
