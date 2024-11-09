@@ -3,23 +3,18 @@
 use crate::util::PgResult;
 use uuid::Uuid;
 
-/// Returns the property ID for the given secret.
-///
-/// If the property does not exist, the function returns `None`.
-pub async fn from_secret(
+/// Checks authentication for a property.
+pub async fn check_auth(
 	db: &tokio_postgres::Client,
-	uuid: &String,
-	secret: &String,
-) -> PgResult<Option<Uuid>> {
-	// TODO hash secret
-	let res = db
+	uuid: &Uuid,
+	secret: &Uuid,
+) -> PgResult<bool> {
+	// TODO hash secret?
+	let row = db
 		.query_opt(
 			"SELECT uuid FROM property WHERE uuid = $1 AND secret = $2",
 			&[uuid, secret],
 		)
 		.await?;
-	let Some(row) = res else {
-		return Ok(None);
-	};
-	Ok(Some(row.get::<_, Uuid>(0)))
+	Ok(row.is_some())
 }

@@ -15,8 +15,8 @@ use tracing::{error, warn};
 use uuid::Uuid;
 
 async fn insert_accesses(
-	property: &Uuid,
 	ctx: &Context,
+	property: &Uuid,
 	accesses: Vec<Access>,
 ) -> Result<(), tokio_postgres::Error> {
 	for access in accesses {
@@ -49,14 +49,17 @@ pub async fn access(
 	AuthBasic((uuid, secret)): AuthBasic,
 	Json(accesses): Json<Vec<Access>>,
 ) -> Response {
-	let Some(secret) = secret else {
+	let (Ok(uuid), Some(Ok(secret))) = (
+		Uuid::parse_str(&uuid),
+		secret.as_deref().map(Uuid::parse_str),
+	) else {
 		warn!("authentication failure");
 		return (StatusCode::UNAUTHORIZED, Body::empty()).into_response();
 	};
-	let res = property::from_secret(&ctx.db, &uuid, &secret).await;
-	let property = match res {
-		Ok(Some(p)) => p,
-		Ok(None) => {
+	let res = property::check_auth(&ctx.db, &uuid, &secret).await;
+	match res {
+		Ok(true) => {}
+		Ok(false) => {
 			warn!("authentication failure");
 			return (StatusCode::UNAUTHORIZED, Body::empty()).into_response();
 		}
@@ -64,8 +67,8 @@ pub async fn access(
 			error!(%error, "could not check secret");
 			return (StatusCode::INTERNAL_SERVER_ERROR, Body::empty()).into_response();
 		}
-	};
-	let res = insert_accesses(&property, &ctx, accesses).await;
+	}
+	let res = insert_accesses(&ctx, &uuid, accesses).await;
 	match res {
 		Ok(_) => Response::new(Body::empty()),
 		Err(error) => {
