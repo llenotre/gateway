@@ -16,7 +16,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::Deserialize;
-use std::{io, process::exit, sync::Arc, time::Duration};
+use std::{io, net::SocketAddr, process::exit, sync::Arc, time::Duration};
 use tokio::{select, time::interval};
 use tokio_postgres::NoTls;
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
@@ -145,11 +145,12 @@ async fn main() -> io::Result<()> {
 			"/newsletter/unsubscribe",
 			post(route::newsletter::unsubscribe),
 		)
-		.layer(TraceLayer::new_for_http())
 		.layer(GovernorLayer {
 			config: governor_conf,
 		})
-		.with_state(ctx);
+		.layer(TraceLayer::new_for_http())
+		.with_state(ctx)
+		.into_make_service_with_connect_info::<SocketAddr>();
 	let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.port)).await?;
 	select! {
 		res = axum::serve(listener, app) => res.expect("HTTP failure"),

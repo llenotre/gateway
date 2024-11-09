@@ -6,7 +6,7 @@ pub mod newsletter;
 use crate::Context;
 use axum::{
 	body::Body,
-	extract::{State},
+	extract::State,
 	http::StatusCode,
 	response::{IntoResponse, Response},
 	Json,
