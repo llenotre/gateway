@@ -72,9 +72,15 @@ async fn main() -> io::Result<()> {
 		.expect("UaParser failure"),
 		geoip: Renewer::new(RenewableInfo {
 			url: config.geoip_url,
+			auth: None,
+			compressed: false,
+		})
+		// TODO find a solution for the rate limit
+		/*geoip: Renewer::new(RenewableInfo {
+			url: config.geoip_url,
 			auth: Some((config.geoip_user, config.geoip_password)),
 			compressed: true,
-		})
+		})*/
 		.await
 		.expect("GeoIP failure"),
 	});
