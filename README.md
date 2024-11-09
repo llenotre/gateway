@@ -10,6 +10,7 @@ It requires the following environment variables:
 - `GATEWAY_URL`: the URL of the endpoint to push analytics to
 - `GATEWAY_PROPERTY`: the property's UUID
 - `GATEWAY_SECRET`: the property's secret
+- `HOST`: the current service's host
 
 
 

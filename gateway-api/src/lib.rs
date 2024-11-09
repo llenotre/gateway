@@ -10,11 +10,11 @@ pub mod util;
 #[derive(Deserialize)]
 pub struct Config {
 	/// URL to the gateway.
-	pub url: String,
+	pub gateway_url: String,
 	/// The property's UUID.
-	pub property: String,
+	pub gateway_property: String,
 	/// The property's secret.
-	pub secret: String,
+	pub gateway_secret: String,
 
 	/// The current service's hostname.
 	pub host: String,
@@ -26,11 +26,7 @@ impl Config {
 	/// If the configuration is incorrect, the function panics.
 	pub fn get() -> &'static Self {
 		static CONFIG: OnceLock<Config> = OnceLock::new();
-		CONFIG.get_or_init(|| {
-			envy::prefixed("GATEWAY_")
-				.from_env()
-				.expect("configuration")
-		})
+		CONFIG.get_or_init(|| envy::from_env().expect("configuration"))
 	}
 }
 

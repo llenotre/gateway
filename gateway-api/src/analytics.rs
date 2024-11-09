@@ -95,25 +95,25 @@ impl AccessPool {
 		}
 		info!(count = pool.len(), "attempt to flush accesses");
 		let config = Config::get();
-		let url = format!("{}/access", config.url);
+		let url = format!("{}/access", config.gateway_url);
 		// HTTP request to push accesses
 		let client = reqwest::Client::new();
 		let res = client
 			.put(url)
-			.basic_auth(&config.property, Some(&config.secret))
+			.basic_auth(&config.gateway_property, Some(&config.gateway_secret))
 			.json(pool)
 			.send()
 			.await;
 		let response = match res {
 			Ok(response) => response,
 			Err(error) => {
-				error!(config.url, %error, "access: HTTP call failure");
+				error!(url, %error, "access: HTTP call failure");
 				return;
 			}
 		};
 		let status = response.status();
 		if !status.is_success() {
-			error!(config.url, %status, "access: HTTP call failure");
+			error!(url, %status, "access: HTTP call failure");
 			return;
 		}
 		// Success: clear pool
