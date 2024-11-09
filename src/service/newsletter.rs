@@ -5,7 +5,7 @@ use chrono::Utc;
 
 /// Insert a new email in the newsletter subscribers list.
 pub async fn insert_subscriber(db: &tokio_postgres::Client, email: &str) -> PgResult<()> {
-	let now = Utc::now();
+	let now = Utc::now().naive_utc();
 	db.execute(
 		"INSERT INTO newsletter_subscriber (email, subscribe_date)\
 			VALUES ($1, $2) ON CONFLICT DO NOTHING",
