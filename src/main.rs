@@ -139,7 +139,7 @@ async fn main() -> io::Result<()> {
 	let app = Router::new()
 		.route("/health", get(route::health))
 		.route("/access", put(route::analytics::access))
-		.route("/avatar/:user", get(route::avatar))
+		.route("/avatar", get(route::avatar))
 		.route("/newsletter/subscribe", post(route::newsletter::subscribe))
 		.route(
 			"/newsletter/unsubscribe",

@@ -6,7 +6,7 @@ pub mod newsletter;
 use crate::Context;
 use axum::{
 	body::Body,
-	extract::{Path, State},
+	extract::{State},
 	http::StatusCode,
 	response::{IntoResponse, Response},
 	Json,
@@ -44,14 +44,13 @@ pub async fn health(State(ctx): State<Arc<Context>>) -> Response {
 }
 
 /// GitHub avatar proxy endpoint, to protect users from data collection (GDPR).
-pub async fn avatar(Path(user): Path<String>) -> Response {
+pub async fn avatar() -> Response {
 	let client = reqwest::Client::new();
-	let url = format!("https://github.com/{user}.png");
-	let res = client.get(url).send().await;
+	let res = client.get("https://github.com/llenotre.png").send().await;
 	let response = match res {
 		Ok(r) => r,
 		Err(error) => {
-			error!(%error, user, "could not get avatar from Github");
+			error!(%error, "could not get avatar from Github");
 			return (StatusCode::BAD_GATEWAY, "bad gateway").into_response();
 		}
 	};
