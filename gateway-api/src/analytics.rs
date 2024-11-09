@@ -99,7 +99,7 @@ impl AccessPool {
 		// HTTP request to push accesses
 		let client = reqwest::Client::new();
 		let res = client
-			.put(url)
+			.put(&url)
 			.basic_auth(&config.gateway_property, Some(&config.gateway_secret))
 			.json(pool)
 			.send()
