@@ -60,6 +60,11 @@ async fn main() -> io::Result<()> {
 			error!(%error, "postgres: connection");
 			exit(1);
 		});
+	let db_task = tokio::spawn(async move {
+		if let Err(error) = connection.await {
+			error!(%error, "database connection error");
+		}
+	});
 	info!("prepare context");
 	let ctx = Arc::new(Context {
 		db: client,
@@ -154,7 +159,7 @@ async fn main() -> io::Result<()> {
 	let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", config.port)).await?;
 	select! {
 		res = axum::serve(listener, app) => res.expect("HTTP failure"),
-		res = connection => res.expect("Database failure"),
+		_ = db_task => panic!("Database task failure"),
 		_ = renew_task => panic!("Resource renew task failure"),
 		_ = anonymize_task => panic!("Anonymization task failure"),
 		_ = rate_limit_task => panic!("Rate limiting task failure"),
