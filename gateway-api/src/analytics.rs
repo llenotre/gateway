@@ -63,8 +63,7 @@ impl AccessPool {
 						if buf.len() >= FLUSH_THRESHOLD {
 							Self::flush(&mut buf).await;
 						}
-					},
-					_ = tokio::signal::ctrl_c() => break,
+					}
 				}
 			}
 			drop(receiver);

@@ -38,7 +38,8 @@ pub async fn subscribe(
 	if !validate_email(&payload.email) {
 		return (StatusCode::BAD_REQUEST, "invalid email address").into_response();
 	}
-	let res = insert_subscriber(&ctx.db, &payload.email).await;
+	let db = ctx.db.read().await;
+	let res = insert_subscriber(&db, &payload.email).await;
 	match res {
 		Ok(_) => Response::new(Body::empty()),
 		Err(error) => {
@@ -53,7 +54,8 @@ pub async fn unsubscribe(
 	State(ctx): State<Arc<Context>>,
 	Json(payload): Json<UnsubscribePayload>,
 ) -> Response {
-	let res = unsubscribe_from_token(&ctx.db, &payload.token).await;
+	let db = ctx.db.read().await;
+	let res = unsubscribe_from_token(&db, &payload.token).await;
 	match res {
 		Ok(_) => Response::new(Body::empty()),
 		Err(error) => {

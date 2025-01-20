@@ -18,7 +18,7 @@ use chrono::Utc;
 use gateway_api::log::LogLayer;
 use serde::Deserialize;
 use std::{io, net::SocketAddr, process::exit, sync::Arc, time::Duration};
-use tokio::{select, time::interval};
+use tokio::{select, sync::RwLock, time::interval};
 use tokio_postgres::NoTls;
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 use tower_http::{
@@ -44,7 +44,7 @@ struct Config {
 }
 
 struct Context {
-	db: tokio_postgres::Client,
+	db: RwLock<tokio_postgres::Client>,
 	uaparser: Renewer<UaParser>,
 	geoip: Renewer<GeoIP>,
 }
@@ -58,20 +58,15 @@ async fn main() -> io::Result<()> {
 	});
 	info!("connect to database");
 	// TODO tls
-	let (client, connection) = tokio_postgres::connect(&config.db, NoTls)
+	let (client, mut connection) = tokio_postgres::connect(&config.db, NoTls)
 		.await
 		.unwrap_or_else(|error| {
 			error!(%error, "postgres: connection");
 			exit(1);
 		});
-	let db_task = tokio::spawn(async move {
-		if let Err(error) = connection.await {
-			error!(%error, "database connection error");
-		}
-	});
 	info!("prepare context");
 	let ctx = Arc::new(Context {
-		db: client,
+		db: RwLock::new(client),
 		uaparser: Renewer::new(RenewableInfo {
 			url: config.uaparser_url,
 			auth: None,
@@ -94,6 +89,35 @@ async fn main() -> io::Result<()> {
 		.expect("GeoIP failure"),
 	});
 	info!("start background tasks");
+	// Setup postgres reconnection task
+	let ctx_ = ctx.clone();
+	let db_task = tokio::spawn(async move {
+		let ctx = ctx_;
+		'a: loop {
+			if let Err(error) = connection.await {
+				error!(%error, "database connection error");
+			}
+			// Try to reconnect
+			const MAX_ATTEMPTS: usize = 10;
+			let mut interval = interval(Duration::from_secs(10));
+			for attempts in 1..=MAX_ATTEMPTS {
+				interval.tick().await;
+				info!("attempting database reconnection ({attempts}/{MAX_ATTEMPTS})");
+				let res = tokio_postgres::connect(&config.db, NoTls).await;
+				match res {
+					Ok((cl, conn)) => {
+						info!("database reconnection success");
+						*ctx.db.write().await = cl;
+						connection = conn;
+						continue 'a;
+					}
+					Err(error) => error!(%error, "database reconnection failure"),
+				}
+			}
+			// stop attempting and crash
+			break;
+		}
+	});
 	// Setup databases renew task
 	let ctx_ = ctx.clone();
 	let renew_task = tokio::spawn(async {
@@ -118,7 +142,8 @@ async fn main() -> io::Result<()> {
 			interval.tick().await;
 			// The end of the date range in which entries are going to be anonymized
 			let end = Utc::now().naive_utc() - Duration::from_days(365);
-			let res = ctx.db.execute(
+			let db = ctx.db.read().await;
+			let res = db.execute(
                 "UPDATE analytics SET peer_addr = NULL, user_agent = NULL WHERE date <= $1 AND (peer_addr IS NOT NULL OR user_agent IS NOT NULL)",
                 &[&end],
             )

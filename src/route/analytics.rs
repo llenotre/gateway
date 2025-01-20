@@ -19,6 +19,7 @@ async fn insert_accesses(
 	property: &Uuid,
 	accesses: Vec<Access>,
 ) -> Result<(), tokio_postgres::Error> {
+	let db = ctx.db.read().await;
 	for access in accesses {
 		let geolocation = access.peer_addr.and_then(|ip| {
 			let geolocation = ctx.geoip.lock().resolve(ip).ok()?;
@@ -28,7 +29,7 @@ async fn insert_accesses(
 			let device = ctx.uaparser.lock().resolve(ua);
 			serde_json::to_value(device).unwrap()
 		});
-		ctx.db.execute("INSERT INTO analytics (property, date, peer_addr, user_agent, referer, geolocation, device, method, uri) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT DO NOTHING",
+		db.execute("INSERT INTO analytics (property, date, peer_addr, user_agent, referer, geolocation, device, method, uri) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT DO NOTHING",
 		&[
 			property,
 			&access.date.naive_utc(),
@@ -56,7 +57,8 @@ pub async fn access(
 		warn!("authentication failure");
 		return (StatusCode::UNAUTHORIZED, Body::empty()).into_response();
 	};
-	let res = property::check_auth(&ctx.db, &uuid, &secret).await;
+	let db = ctx.db.read().await;
+	let res = property::check_auth(&db, &uuid, &secret).await;
 	match res {
 		Ok(true) => {}
 		Ok(false) => {
