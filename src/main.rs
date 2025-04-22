@@ -11,8 +11,8 @@ use crate::{
 	util::{RenewableInfo, Renewer},
 };
 use axum::{
-	routing::{get, post, put},
 	Router,
+	routing::{get, post, put},
 };
 use chrono::Utc;
 use gateway_api::log::LogLayer;
@@ -20,7 +20,7 @@ use serde::Deserialize;
 use std::{io, net::SocketAddr, process::exit, sync::Arc, time::Duration};
 use tokio::{select, sync::RwLock, time::interval};
 use tokio_postgres::NoTls;
-use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
+use tower_governor::{GovernorLayer, governor::GovernorConfigBuilder};
 use tower_http::{
 	cors,
 	cors::{AllowHeaders, CorsLayer},

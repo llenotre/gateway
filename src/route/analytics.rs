@@ -1,12 +1,12 @@
 //! Analytics collection.
 
-use crate::{service::property, Context};
+use crate::{Context, service::property};
 use axum::{
+	Json,
 	body::Body,
 	extract::State,
 	http::StatusCode,
 	response::{IntoResponse, Response},
-	Json,
 };
 use axum_auth::AuthBasic;
 use gateway_api::analytics::Access;

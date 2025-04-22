@@ -1,29 +1,29 @@
 [package]
 name = "gateway"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 gateway-api = { path = "gateway-api" }
-anyhow = "1.0.94"
-axum = { version = "0.7.7", features = ["json"] }
-axum-auth = "0.7.0"
-chrono = "0.4.39"
+anyhow = "1.0.98"
+axum = { version = "0.8.3", features = ["json"] }
+axum-auth = "0.8.1"
+chrono = "0.4.40"
 envy = "0.4.2"
-flate2 = "1.0.35"
-maxminddb = "0.24.0"
+flate2 = "1.1.1"
+maxminddb = "0.26.0"
 regex = "1.11.1"
-reqwest = { version = "0.12.9", features = ["stream"] }
-serde = { version = "1.0.216", features = ["derive"] }
-serde_json = "1.0.133"
-tokio = { version = "1.42.0", features = ["rt-multi-thread"] }
-tokio-postgres = { version = "0.7.12", features = ["with-chrono-0_4", "with-serde_json-1", "with-uuid-1"] }
+reqwest = { version = "0.12.15", features = ["stream"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+tokio = { version = "1.44.2", features = ["rt-multi-thread"] }
+tokio-postgres = { version = "0.7.13", features = ["with-chrono-0_4", "with-serde_json-1", "with-uuid-1"] }
 tower-http = { version = "0.6.2", features = ["cors"] }
-tower_governor = { version = "0.5.0", features = ["tracing"] }
+tower_governor = { version = "0.7.0", features = ["tracing"] }
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
 uaparser = "0.6.4"
-uuid = { version = "1.11.0", features = ["v4"] }
+uuid = { version = "1.16.0", features = ["v4"] }
 
 [profile.release]
 strip = true

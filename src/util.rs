@@ -1,6 +1,6 @@
 //! Utilities.
 
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use flate2::read::GzDecoder;
 use regex::Regex;
 use std::{

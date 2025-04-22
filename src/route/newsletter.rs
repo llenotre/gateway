@@ -1,16 +1,16 @@
 //! Newsletter endpoints.
 
 use crate::{
+	Context,
 	service::newsletter::{insert_subscriber, unsubscribe_from_token},
 	util::validate_email,
-	Context,
 };
 use axum::{
+	Json,
 	body::Body,
 	extract::State,
 	http::StatusCode,
 	response::{IntoResponse, Response},
-	Json,
 };
 use serde::Deserialize;
 use std::sync::Arc;

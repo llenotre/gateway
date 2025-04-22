@@ -5,11 +5,11 @@ pub mod newsletter;
 
 use crate::Context;
 use axum::{
+	Json,
 	body::Body,
 	extract::State,
 	http::StatusCode,
 	response::{IntoResponse, Response},
-	Json,
 };
 use serde::Serialize;
 use std::sync::Arc;
