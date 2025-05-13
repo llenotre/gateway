@@ -1,6 +1,7 @@
 //! Data collection and authentication service.
 
 #![feature(duration_constructors)]
+#![feature(duration_constructors_lite)]
 
 mod route;
 mod service;
